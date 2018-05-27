@@ -1,0 +1,258 @@
+{
+    "appid": "593ee99f-c8d2-4222-bd7f-79a0e8d2f065",
+    "name": "Greynoise",
+    "description": "Implements API calls to the Greynoise API",
+    "type": "information",
+    "product_vendor": "Greynoise",
+    "logo": "greynoise.png",
+    "logo_dark": "greynoise_dark.png",
+    "product_name": "API",
+    "product_version_regex": ".*",
+    "publisher": "Domenico Perre",
+    "license": "Copyright (c) Domenico Perre, 2018",
+    "app_version": "1.0.0",
+    "utctime_updated": "2018-05-24T10:20:32.631303Z",
+    "package_name": "phantom_greynoise",
+    "main_module": "greynoise_connector.py",
+    "min_phantom_version": "3.5.205",
+    "app_wizard_version": "1.0.0",
+    "configuration": {
+        "apiKey": {
+            "description": "API Key for Greynoise",
+            "data_type": "string",
+            "required": true,
+            "value_list": [],
+            "default": "",
+            "order": 0
+        }
+    },
+    "actions": [
+        {
+            "action": "test connectivity",
+            "identifier": "test_connectivity",
+            "description": "Validate the asset configuration for connectivity using supplied configuration",
+            "verbose": "",
+            "type": "test",
+            "read_only": true,
+            "parameters": {},
+            "output": [],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "lookup ip",
+            "identifier": "lookup_ip",
+            "description": "Check for the presence of an IP in a threat intelligence feed",
+            "verbose": "",
+            "type": "investigate",
+            "read_only": true,
+            "parameters": {
+                "ip": {
+                    "description": "IP to lookup",
+                    "data_type": "string",
+                    "required": true,
+                    "primary": true,
+                    "contains": [
+                        "ip"
+                    ],
+                    "value_list": [],
+                    "default": "",
+                    "order": 0
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.parameter.ip",
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ],
+                    "column_name": "ip",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "column_name": "status",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.code_meaning",
+                    "data_type": "string",
+                    "column_name": "code meaning",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.noise",
+                    "data_type": "string",
+                    "column_name": "Noise",
+                    "column_order": 3
+                },
+
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.summary.noise",
+                    "data_type": "string"
+                }
+
+            ],
+            "render": {
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "lookup ip detail",
+            "identifier": "lookup_ip_detail",
+            "description": "Provides additional detail to lookup ip",
+            "verbose": "Get more information about a given IP address. Returns time ranges, IP metadata (network owner, ASN,reverse DNS pointer, country), associated actors, activity tags,  and raw port scan and web request information.",
+            "type": "investigate",
+            "read_only": false,
+            "parameters": {
+                "ip": {
+                    "description": "IP Address",
+                    "data_type": "string",
+                    "required": true,
+                    "primary": false,
+                    "contains": [
+                        "ip"
+                    ],
+                    "value_list": [],
+                    "default": "",
+                    "order": 0
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.parameter.ip",
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ],
+                    "column_name": "ip",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "column_name": "status",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.actor",
+                    "data_type": "string",
+                    "column_name": "actor",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.seen",
+                    "data_type": "string",
+                    "column_name": "seen",
+                    "column_order": 3
+                },
+                {
+                    "data_path": "action_result.data.*.first_seen",
+                    "data_type": "string",
+                    "contains": [
+                        "date"
+                    ],
+                    "column_name": "first_seen",
+                    "column_order": 4
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.category",
+                    "data_type": "string",
+                    "column_name": "category",
+                    "column_order": 5
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.city",
+                    "data_type": "string",
+                    "column_name": "city",
+                    "column_order": 6
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.country",
+                    "data_type": "string",
+                    "column_name": "country",
+                    "column_order": 7
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.tor",
+                    "data_type": "string",
+                    "column_name": "tor",
+                    "column_order": 8
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.organization",
+                    "data_type": "string",
+                    "column_name": "organization",
+                    "column_order": 9
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.os",
+                    "data_type": "string",
+                    "column_name": "os",
+                    "column_order": 10
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.asn",
+                    "data_type": "string",
+                    "contains": [
+                        "asn"
+                    ],
+                    "column_name": "asn",
+                    "column_order": 11
+                },
+                {
+                    "data_path": "action_result.data.*.metadata.rdns",
+                    "data_type": "string",
+                    "contains": [
+                        "domain"
+                    ],
+                    "column_name": "rdns",
+                    "column_order": 12
+                },
+                {
+                    "data_path": "action_result.data.*.last_seen",
+                    "data_type": "string",
+                    "contains": [
+                        "date"
+                    ],
+                    "column_name": "asn",
+                    "column_order": 13
+                },
+                {
+                    "data_path": "action_result.summary.ip",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                }
+            ],
+            "render": {
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        }
+    ]
+}
