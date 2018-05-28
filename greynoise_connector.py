@@ -149,7 +149,7 @@ class GreynoiseConnector(BaseConnector):
         # Place api key in own self variable.
         api_key = config.get('apiKey')
 
-        # Create a new Security Trails Python Object
+        # Create a new Greynoise Python Object
         s = greyNoise(api_key=api_key)
 
         # NOTE: test connectivity does _NOT_ take any parameters
@@ -187,13 +187,13 @@ class GreynoiseConnector(BaseConnector):
         # Place api key in own self variable.
         api_key = config.get('apiKey')
 
-        # Create a new Security Trails Python Object
+        # Create a new Greynoise Python Object
         s = greyNoise(api_key=api_key)
 
         # Pass domain to the search
         ip = param['ip']
 
-        # Issue request to get_whois
+        # Issue request to get_quick_ip
         result = s.get_quick_ip(ip)
 
         # If the result fails
@@ -243,13 +243,13 @@ class GreynoiseConnector(BaseConnector):
         # Place api key in own self variable.
         api_key = config.get('apiKey')
 
-        # Create a new Security Trails Python Object
+        # Create a new Greynoise Python Object
         s = greyNoise(api_key=api_key)
 
         # Pass domain to the search
         ip = param['ip']
 
-        # Issue request to get_whois
+        # Issue request to get_context_ip
         result = s.get_context_ip(ip)
 
         # If the result fails
