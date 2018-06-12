@@ -1,12 +1,7 @@
-# -----------------------------------------
-# Phantom sample App Connector python file
-# -----------------------------------------
-
 # Phantom App imports
 import phantom.app as phantom
 from phantom.base_connector import BaseConnector
 from phantom.action_result import ActionResult
-from greynoise import *
 
 # Usage of the consts file is recommended
 # from greynoise_consts import *
@@ -123,7 +118,7 @@ class GreynoiseConnector(BaseConnector):
             return RetVal(action_result.set_status(phantom.APP_ERROR, "Invalid method: {0}".format(method)), resp_json)
 
         # Create a URL to connect to
-        url = self._base_url + endpoint
+        url = endpoint
 
         try:
             r = request_func(
@@ -134,9 +129,20 @@ class GreynoiseConnector(BaseConnector):
                             verify=config.get('verify_server_cert', False),
                             params=params)
         except Exception as e:
-            return RetVal(action_result.set_status( phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))), resp_json)
+            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(str(e))), resp_json)
 
         return self._process_response(r, action_result)
+
+    def _handle_code_convert(self, code):
+        return {
+            "0x00": "The IP has never been observed scanning the Internet",
+            "0x01": "The IP has been observed by the GreyNoise sensor network",
+            "0x02": "The IP has been observed scanning the GreyNoise sensor network, but has not completed a full connection, meaning this can be spoofed",
+            "0x03": "The IP is adjacent to another host that has been directly observed by the GreyNoise sensor network",
+            "0x04": "Reserved",
+            "0x05": "This IP is commonly spoofed in Internet-scan activity",
+            "0x06": "This IP has been observed as noise, but this host belongs to a cloud provider where IPs can be cycled frequently"
+        }[code]
 
     def _handle_test_connectivity(self, param):
 
@@ -149,24 +155,63 @@ class GreynoiseConnector(BaseConnector):
         # Place api key in own self variable.
         api_key = config.get('apiKey')
 
+        header = {'key': api_key}
+
+        endpoint = 'https://enterprise.api.greynoise.io/v2/meta/ping'
+
         # Create a new Greynoise Python Object
-        s = greyNoise(api_key=api_key)
+        ret_val, response = self._make_rest_call(endpoint, action_result, params=None, headers=header)
 
-        # NOTE: test connectivity does _NOT_ take any parameters
-        # i.e. the param dictionary passed to this handler will be empty.
-        # Also typically it does not add any data into an action_result either.
-        # The status and progress messages are more important.
-
-        # Connect to Phantom Endpoint
-        self.save_progress("Connecting to endpoint")
-
-        if s.test_connect() is False:
+        if (phantom.is_fail(ret_val)):
             # the call to the 3rd party device or service failed, action result should contain all the error details
             # so just return from here
             self.save_progress("Test Connectivity Failed.")
             return action_result.get_status()
+
         # Return success
         self.save_progress("Test Connectivity Passed")
+        return action_result.set_status(phantom.APP_SUCCESS)
+
+    def _handle_ip_reputation(self, param):
+
+        # Implement the handler here
+        # use self.save_progress(...) to send progress messages back to the platform
+        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+
+        # Add an action result object to self (BaseConnector) to represent the action for this param
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        # Add config to init variable to get root API Key
+        config = self.get_config()
+
+        # Place api key in own self variable.
+        api_key = config.get('apiKey')
+
+        header = {'key': api_key}
+
+        ip = param['ip']
+
+        endpoint = 'https://enterprise.api.greynoise.io/v2/noise/quick/{}'.format(ip)
+
+        ret_val, response = self._make_rest_call(endpoint, action_result, params=None, headers=header)
+
+        if (phantom.is_fail(ret_val)):
+            # the call to the 3rd party device or service failed, action result should contain all the error details
+            # so just return from here
+            return action_result.get_status()
+
+        # Now post process the data,  uncomment code as you deem fit
+        self.save_progress("response = {}".format(response))
+
+        response['code_meaning'] = self._handle_code_convert(response['code'])
+
+        # Add the response into the data section
+        action_result.add_data(response)
+
+        summary = action_result.update_summary({})
+        summary['ip'] = ip
+        summary['code_meaning'] = response['code_meaning']
+
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _handle_lookup_ip(self, param):
@@ -178,107 +223,34 @@ class GreynoiseConnector(BaseConnector):
         # Add an action result object to self (BaseConnector) to represent the action for this param
         action_result = self.add_action_result(ActionResult(dict(param)))
 
-        # Add an action result object to self (BaseConnector) to represent the action for this param
-        action_result = self.add_action_result(ActionResult(dict(param)))
-
         # Add config to init variable to get root API Key
         config = self.get_config()
 
         # Place api key in own self variable.
         api_key = config.get('apiKey')
 
-        # Create a new Greynoise Python Object
-        s = greyNoise(api_key=api_key)
+        header = {'key': api_key}
 
-        # Pass domain to the search
         ip = param['ip']
 
-        # Issue request to get_quick_ip
-        result = s.get_quick_ip(ip)
+        endpoint = 'https://enterprise.api.greynoise.io/v2/noise/context/{}'.format(ip)
 
-        # If the result fails
-        if (result is False):
+        ret_val, response = self._make_rest_call(endpoint, action_result, params=None, headers=header)
+
+        if (phantom.is_fail(ret_val)):
             # the call to the 3rd party device or service failed, action result should contain all the error details
             # so just return from here
             return action_result.get_status()
 
-        # Test to see if response can be parsed
-        if json.loads(result):
-            response = json.loads(result)
-
-        # If it cannot be parsed throw error message
-        else:
-            return action_result.set_status(phantom.APP_ERROR, status_message="Error Passing JSON output.  Error Message: {}".format(result))
-
-        # Create new python dictionary to store output
-        data_output = response
+        # Now post process the data,  uncomment code as you deem fit
+        self.save_progress("response = {}".format(response))
 
         # Add the response into the data section
-        action_result.add_data(data_output)
+        action_result.add_data(response)
 
-        # Add a dictionary that is made up of the most important values from data into the summary
         summary = action_result.update_summary({})
         summary['ip'] = ip
-        summary['noise'] = data_output['noise']
 
-        # Return success, no need to set the message, only the status
-        # BaseConnector will create a textual message based off of the summary dictionary
-        return action_result.set_status(phantom.APP_SUCCESS)
-
-    def _handle_lookup_ip_detail(self, param):
-
-        # Implement the handler here
-        # use self.save_progress(...) to send progress messages back to the platform
-        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
-
-        # Add an action result object to self (BaseConnector) to represent the action for this param
-        action_result = self.add_action_result(ActionResult(dict(param)))
-
-        # Add an action result object to self (BaseConnector) to represent the action for this param
-        action_result = self.add_action_result(ActionResult(dict(param)))
-
-        # Add config to init variable to get root API Key
-        config = self.get_config()
-
-        # Place api key in own self variable.
-        api_key = config.get('apiKey')
-
-        # Create a new Greynoise Python Object
-        s = greyNoise(api_key=api_key)
-
-        # Pass domain to the search
-        ip = param['ip']
-
-        # Issue request to get_context_ip
-        result = s.get_context_ip(ip)
-
-        # If the result fails
-        if (result is False):
-            # the call to the 3rd party device or service failed, action result should contain all the error details
-            # so just return from here
-            return action_result.get_status()
-
-        # Test to see if response can be parsed
-        if json.loads(result):
-            response = json.loads(result)
-
-        # If it cannot be parsed throw error message
-        else:
-            return action_result.set_status(phantom.APP_ERROR, status_message="Error Passing JSON output.  Error Message: {}".format(result))
-
-        # Create new python dictionary to store output
-        data_output = response
-
-        # Add the response into the data section
-        action_result.add_data(data_output)
-
-        # Add a dictionary that is made up of the most important values from data into the summary
-        summary = action_result.update_summary({})
-        summary['ip'] = ip
-        summary['actor'] = data_output['actor']
-
-        # Return success, no need to set the message, only the status
-        # BaseConnector will create a textual message based off of the summary dictionary
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def handle_action(self, param):
@@ -293,11 +265,11 @@ class GreynoiseConnector(BaseConnector):
         if action_id == 'test_connectivity':
             ret_val = self._handle_test_connectivity(param)
 
+        elif action_id == 'ip_reputation':
+            ret_val = self._handle_ip_reputation(param)
+
         elif action_id == 'lookup_ip':
             ret_val = self._handle_lookup_ip(param)
-
-        elif action_id == 'lookup_ip_detail':
-            ret_val = self._handle_lookup_ip_detail(param)
 
         return ret_val
 
